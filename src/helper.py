@@ -41,9 +41,23 @@ def isentropic_p_over_p_tot(M, gamma=1.4):
 def isentropic_T_over_T_tot(M, gamma=1.4):
     return 1 / (1 + (gamma - 1) / 2 * M ** 2)
 
-def isentropic_A_over_Astar(M, gamma=1.4)
+def isentropic_A_over_Astar(M, gamma=1.4):
 
-    a = ((gamma+1) / 2) ** ()
+    a = ((gamma+1) / 2) ** (-(gamma+1) / 2 / (gamma-1))
+    b = (1+ (gamma-1)/2 * M**2) ** ((gamma+1) / 2 / (gamma-1))
+
+    return a * b / M
+
+def isentropic_Mach_from_area_ratio(A_Astar, gamma=1.4):
+    # invert the isentropic_A_over_Astar function
+    res = minimize(lambda Mach: abs(isentropic_A_over_Astar(Mach, gamma) - A_Astar),
+                   x0=0.9,
+                   bounds=[(0.01, 10.0)],
+                   method='Nelder-Mead'
+                   )
+
+    M = res.x[0]
+    return M
 
 if __name__ == "__main__":
     Dh = 0.05**2
