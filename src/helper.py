@@ -43,26 +43,39 @@ def Fanno_temperature_ratio(M0, M1, gamma=1.4):
 def isentropic_p_over_p_tot(M, gamma=1.4):
     return 1 / (1 + (gamma - 1) / 2 * M ** 2) * (gamma / (gamma - 1))
 
+def isentropic_pressure_ratio(M0, M1, gamma=1.4):
+    return isentropic_p_over_p_tot(M0, gamma) / isentropic_p_over_p_tot(M1, gamma)
+
 def isentropic_T_over_T_tot(M, gamma=1.4):
     return 1 / (1 + (gamma - 1) / 2 * M ** 2)
 
+def isentropic_temp_ratio(M0, M1, gamma=1.4):
+    return isentropic_T_over_T_tot(M0, gamma) / isentropic_T_over_T_tot(M1, gamma)
+
 def isentropic_A_over_Astar(M, gamma=1.4):
+    if M == 0:
+        return 0.0
 
     a = ((gamma+1) / 2) ** (-(gamma+1) / 2 / (gamma-1))
     b = (1+ (gamma-1)/2 * M**2) ** ((gamma+1) / 2 / (gamma-1))
 
     return a * b / M
 
-def isentropic_Mach_from_area_ratio(A_Astar, gamma=1.4):
-    # invert the isentropic_A_over_Astar function
-    res = minimize(lambda Mach: abs(isentropic_A_over_Astar(Mach, gamma) - A_Astar),
-                   x0=0.9,
+def isentropic_area_ratio(M0, M1, gamma=1.4):
+    if any([M1 == 0, M0 == 0]):
+        return None
+    return isentropic_A_over_Astar(M0, gamma) / isentropic_A_over_Astar(M1, gamma)
+
+def isentropic_Mach_from_area_ratio(A1_A0, M0, gamma=1.4):
+    # invert the isentropic_area_ratio function
+    res = minimize(lambda Mach: abs(isentropic_area_ratio(Mach, M0, gamma) - A1_A0),
+                   x0=M0,
                    bounds=[(0.01, 10.0)],
                    method='Nelder-Mead'
                    )
 
-    M = res.x[0]
-    return M
+    M1 = res.x[0]
+    return M1
 
 if __name__ == "__main__":
     Dh = 0.05**2

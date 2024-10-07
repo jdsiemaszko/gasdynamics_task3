@@ -57,30 +57,63 @@ class FlowElement():
     @property
     def V(self):
         return self.a * self.M
-    
-def isentropic_propagate(fe : FlowElement, M1 = None, p1 = None, T1 = None) -> FlowElement:
-    if M1 is not None:
-        p1 = isentropic_p_over_p_tot(fe.M, fe.gamma)
-        T1 = isentropic_T_over_T_tot(fe.M, fe.gamma)
 
-        fe1 = FlowElement(M1, p1, T1, fe.gamma, fe.R, fe.A, fe.x)
+    def __repr__(self):
+        string = "Flow Element at location x={:.2f} \n".format(self.x)
+        for attr in ['M', 'p', 'rho', 'T']:
+            val = self.__getattribute__(attr)
+            string += '{} : {:.2f} \n'.format(attr, val)
+        return string
+
+
+    
+def isentropic_propagate(fe : FlowElement, M1 = None, p1 = None, T1 = None, A1=None) -> FlowElement:
+    if M1 is not None:
+        p1 = isentropic_pressure_ratio(M1, fe.M, fe.gamma) * fe.p
+        T1 = isentropic_temp_ratio(M1, fe.M, fe.gamma) * fe.T
+
+        if fe.M == 0:
+            A1 = fe.A
+        else:
+            A1 = isentropic_area_ratio(M1, fe.M, fe.gamma) * fe.A
+
+        fe1 = FlowElement(M1, p1, T1, fe.gamma, fe.R, A1, fe.x)
+
+        return fe1
+    elif A1 is not None:
+        M1 = isentropic_Mach_from_area_ratio(A1 / fe.A, fe.M, fe.gamma)
+        p1 = isentropic_pressure_ratio(M1, fe.M, fe.gamma) * fe.p
+        T1 = isentropic_temp_ratio(M1, fe.M, fe.gamma) * fe.T
+        fe1 = FlowElement(M1, p1, T1, fe.gamma, fe.R, A1, fe.x)
 
         return fe1
     else:
         raise NotImplementedError('bad input')
 
 
-def Fanno_propagate(fe: FlowElement, friction, distance) -> FlowElement:
+def Fanno_propagate(fe: FlowElement, friction, distance=None, M1=None) -> FlowElement:
+    if distance is not None:
 
-    xfinal = distance + fe.x
+        xfinal = distance + fe.x
 
-    M1 = Fanno_Mach_integrator(fe.M, xfinal, fe.Dh, fe.gamma, friction, x_initial=fe.x)
-    p1 = Fanno_pressure_ratio(M1, fe.M, fe.gamma) * fe.p
-    T1 = Fanno_temperature_ratio(M1, fe.M, fe.gamma) * fe.T
+        M1 = Fanno_Mach_integrator(fe.M, xfinal, fe.Dh, fe.gamma, friction, x_initial=fe.x)
+        p1 = Fanno_pressure_ratio(M1, fe.M, fe.gamma) * fe.p
+        T1 = Fanno_temperature_ratio(M1, fe.M, fe.gamma) * fe.T
 
-    fe1 = FlowElement(M1, p1, T1, fe.gamma, fe.R, fe.A, fe.x)
+        fe1 = FlowElement(M1, p1, T1, fe.gamma, fe.R, fe.A, fe.x + distance)
 
-    return fe1
+        return fe1
+
+    elif M1 is not None:
+        dist = Fanno_length_from_Mach_difference(M0=fe.M, Mfinal=M1, gamma=fe.gamma, friction=friction, Dh=fe.Dh)
+        p1 = Fanno_pressure_ratio(M1, fe.M, fe.gamma) * fe.p
+        T1 = Fanno_temperature_ratio(M1, fe.M, fe.gamma) * fe.T
+
+        fe1 = FlowElement(M1, p1, T1, fe.gamma, fe.R, fe.A, fe.x + dist)
+
+        return fe1
+    else:
+        raise NotImplementedError('bad input')
 
 def shock(fe:FlowElement) -> FlowElement:
     pass
