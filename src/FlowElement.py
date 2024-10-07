@@ -58,6 +58,7 @@ class FlowElement():
     def V(self):
         return self.a * self.M
 
+    @property
     def Ttot(self):
         return self.T * (1 + ((self.gamma - 1) / 2) * self.M**2)
 
