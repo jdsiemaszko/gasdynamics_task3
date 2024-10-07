@@ -31,9 +31,14 @@ def Fanno_p_over_p_sonic(M, gamma=1.4):
     )
     return 1 / M / sqr
 
+def Fanno_pressure_ratio(M0, M1, gamma=1.4):
+    return Fanno_p_over_p_sonic(M0, gamma) / Fanno_p_over_p_sonic(M1, gamma)
+
 def Fanno_T_over_T_sonic(M, gamma=1.4):
     return 1 / ((2 / (gamma+1)) * (1 + (gamma-1) / 2 * M**2))
 
+def Fanno_temperature_ratio(M0, M1, gamma=1.4):
+    return Fanno_T_over_T_sonic(M0, gamma) / Fanno_T_over_T_sonic(M1, gamma)
 
 def isentropic_p_over_p_tot(M, gamma=1.4):
     return 1 / (1 + (gamma - 1) / 2 * M ** 2) * (gamma / (gamma - 1))
