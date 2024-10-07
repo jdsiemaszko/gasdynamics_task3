@@ -58,6 +58,19 @@ class FlowElement():
     def V(self):
         return self.a * self.M
 
+    def Ttot(self):
+        return self.T * (1 + ((self.gamma - 1) / 2) * self.M**2)
+
+    @property
+    def ptot(self):
+        return self.p * (1 + ((self.gamma - 1) / 2) * self.M**2) ** (self.gamma / (self.gamma - 1))
+
+    @property
+    def rhotot(self):
+        return self.rho * (1 + ((self.gamma - 1) / 2) * self.M**2) ** (1 / (self.gamma - 1))
+
+
+
     def __repr__(self):
         string = "Flow Element at location x={:.2f} \n".format(self.x)
         for attr in ['M', 'p', 'rho', 'T']:
@@ -115,9 +128,20 @@ def Fanno_propagate(fe: FlowElement, friction, distance=None, M1=None) -> FlowEl
     else:
         raise NotImplementedError('bad input')
 
-def shock(fe:FlowElement) -> FlowElement:
-    pass
-        
+def normal_shock(fe: FlowElement) -> FlowElement:
+    M1 = fe.M
+    p1 = fe.p
+    T1 = fe.T
+    gamma = fe.gamma
+
+    # normal shock relations
+    M2 = math.sqrt(((gamma - 1) * M1**2 + 2) / (2 * gamma * M1**2 - (gamma - 1))) if M1 > 1 else 1-1e-6
+    p2 = p1 * (1 + (2 * gamma / (gamma + 1)) * (M1**2 - 1))
+    T2 = T1 * ((p2 / p1) * ((gamma + 1) * M1**2) / (2 + (gamma - 1) * M1**2))
+
+    post_shock_element = FlowElement(M2, p2, T2, gamma, fe.R, fe.A, fe.x)
+
+    return post_shock_element
     
 
 
