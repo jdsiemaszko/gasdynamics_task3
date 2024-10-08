@@ -110,7 +110,8 @@ def Fanno_propagate(fe: FlowElement, friction, distance=None, M1=None) -> FlowEl
 
         xfinal = distance + fe.x
 
-        M1 = Fanno_Mach_integrator(fe.M, xfinal, fe.Dh, fe.gamma, friction, x_initial=fe.x)
+        M1, _, _ = Fanno_integrator(fe.M, fe.p, fe.T, xfinal, fe.Dh, fe.gamma, friction, x_initial=fe.x)
+        # M1 = Fanno_Mach_integrator(fe.M, xfinal, fe.Dh, fe.gamma, friction, x_initial=fe.x)
         p1 = Fanno_pressure_ratio(M1, fe.M, fe.gamma) * fe.p
         T1 = Fanno_temperature_ratio(M1, fe.M, fe.gamma) * fe.T
 

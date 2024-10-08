@@ -46,7 +46,7 @@ print('exit pressure 2: {:.2f}'.format(FEexhaust2.p))
 FEtest_section3 = isentropic_propagate(FEstar, A1=Atest)
 FEexhaust3 = Fanno_propagate(FEtest_section3, friction=friction, distance=Ltest)
 FEexhaust3_shock = normal_shock(FEexhaust3)
-# print(FE0, FEstar, FEtest_section2, FEexhaust2, FEexhaust2_shock)
+print(FE0, FEstar, FEtest_section2, FEexhaust3, FEexhaust3_shock)
 print('pressure ratio 3: {:.2f}'.format(FE0.p / FEexhaust3_shock.p))
 print('total pressure ratio 3: {:.2f}'.format(FE0.ptot / FEexhaust3_shock.ptot))
 print('exit pressure 3: {:.2f}'.format(FEexhaust3_shock.p))
@@ -57,4 +57,7 @@ FEexhaust_b = Fanno_propagate(FEtest_section3, friction=friction, distance=Ltest
 print('pressure ratio b): {:.2f}'.format(FE0.p / FEexhaust_b.p))
 print('total pressure ratio b): {:.2f}'.format(FE0.ptot / FEexhaust_b.ptot))
 print('exit pressure b): {:.2f}'.format(FEexhaust_b.p))
+
+# print(FE0, FEstar, FEtest_section_b, FEexhaust_b)
+
 

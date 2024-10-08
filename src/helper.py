@@ -2,8 +2,11 @@ import numpy as np
 from scipy.optimize import minimize
 import math
 
-def Fanno_Mach_integrator(M0, x_final, Dh, gamma=1.4, friction=3e-3, N=1000, x_initial=0.0):
+def Fanno_integrator(M0, p0, T0, x_final, Dh, gamma=1.4, friction=3e-3, N=1000, x_initial=0.0):
     M_current = M0
+    T_current = T0
+    p_current = p0
+
     dx = (x_final - x_initial) / N
 
     for i in range(N):
@@ -11,18 +14,41 @@ def Fanno_Mach_integrator(M0, x_final, Dh, gamma=1.4, friction=3e-3, N=1000, x_i
                 -2 * M_current ** 2 * (1 + (gamma - 1) / 2 * M_current ** 2) * gamma * friction /
                 Dh * (M_current ** 2 - 1)
         )
+        if M_current != 1:
+            p_current += dx * friction * Dh * ((-gamma*M_current**2*(1+(gamma-1)*M_current**2))/(1-M_current**2)) * p_current
+            T_current += dx * friction * Dh * ((-gamma * (gamma-1)*M_current**4)/(1-M_current**2)) * T_current
 
-    return M_current
+    return M_current, p_current, T_current
 
 
 def Fanno_length_from_Mach_difference(M0, Mfinal, Dh, x_initial=0.0, gamma=1.4, friction=3e-3, N=1000):
-    res = minimize(lambda x: abs(Fanno_Mach_integrator(M0 = M0, x_final=x, Dh=Dh,
+    res = minimize(lambda x: abs(Fanno_integrator(M0, 0.0, 0.0, x_final=x, Dh=Dh,
                                                        gamma=gamma, friction=friction, N=N, x_initial=x_initial) - Mfinal),
                    x0=Dh * 10,
                    bounds=[(0.0, 1000*Dh)],
                    method='Nelder-Mead'
                    )
     return res.x[0]
+
+def Fanno_max_unchoked_length(M0, gamma=1.4, Dhref = 1.0, fref = 1.0):
+    a = (1 - M0**2) / M0**2
+    b = (gamma+1)/2 * math.log(
+        (gamma+1) * M0**2 / (2*(1+(gamma-1)/2*M0**2))
+    )
+
+    Lmax = (a+b) * Dhref / 4 / gamma / fref
+    return Lmax
+
+def Fanno_M0_from_choked_length(Lchoked, gamma=1.4, Dhref = 1.0, fref = 1.0):
+    res = minimize(lambda M0: abs(Fanno_max_unchoked_length(M0, gamma, Dhref, fref) - Lchoked),
+                   x0=0.2,
+                   bounds=[(0.0, 1.0)], # always subsonic?
+                   method='Nelder-Mead'
+                   )
+    return res.x[0]
+
+
+
 
 def Fanno_p_over_p_sonic(M, gamma=1.4):
 
@@ -81,17 +107,6 @@ def isentropic_Mach_from_area_ratio(A1_A0, M0, gamma=1.4):
     M1 = res.x[0]
     return M1
 
-if __name__ == "__main__":
-    Dh = 0.05**2
-    M0 = 0.3
-    for x_final in np.linspace(0.1, 1.0, 5):
-        # print(x_final)
-        m = Fanno_Mach_integrator(M0, x_final, Dh)
-        # print(m)
-        xpred = Fanno_length_from_Mach_difference(M0, m, Dh)
-        # print(xpred)
-
-        print(np.abs(x_final - xpred) / x_final * 100)
 
 
 
