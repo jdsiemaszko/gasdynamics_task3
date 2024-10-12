@@ -1,6 +1,8 @@
 import numpy as np
 import math
 from src.FlowElement import *
+
+# inputs
 gamma = 1.4
 
 friction = 0.005
@@ -14,16 +16,17 @@ M0 = 0.0
 M1 = 0.3
 M2 = 0.95
 
+# work out the solution
 FE0 = FlowElement(M0, p0, T0, A=A)
-FE1 = isentropic_propagate(FE0, M1=M1)
-FE2 = Fanno_propagate(FE1, friction=friction, M1=M2)
+FE1 = isentropic_propagate(FE0, M1=M1) # go along isentrope of FE0 to M = M1
+FE2 = Fanno_propagate(FE1, friction=friction, M1=M2) # go along Fanno line of FE1 to M=M2
 
 L_pipe = FE2.x - FE1.x
 
 L_ref = L_pipe * 0.75
-FE3 = Fanno_propagate(FE1, friction=friction, distance=L_ref)
+FE3 = Fanno_propagate(FE1, friction=friction, distance=L_ref) # repeat for lower pipe length
 
-for fp in [FE0, FE1, FE2, FE3]:
+for fp in [FE0, FE1, FE2, FE3]: # print results (note that the distance is only relevant for Fanno lines)
     print(fp)
 
 

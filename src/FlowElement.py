@@ -1,7 +1,16 @@
+"""
+Useful class and function definitions for Task 3
+"""
 from src.helper import *
 import math
 
 class FlowElement():
+    """
+    Main computational element - a point in the flow.
+    Can be propagated along isentropes, Fanno lines, and Rayleigh lines
+    state variables: M, p, T
+    other variables not stored, but can be computed as properties
+    """
     def __init__(self, M, p, T, gamma=1.4, R=287.05, A = None, x = 0.0):
         
         self.__M = M
@@ -70,10 +79,18 @@ class FlowElement():
     def rhotot(self):
         return self.rho * (1 + ((self.gamma - 1) / 2) * self.M**2) ** (1 / (self.gamma - 1))
 
+    @property
+    def M_max_T(self):
+        return 1 / math.sqrt(self.gamma)
 
+    @property
+    def Cp(self):
+        return self.R * self.gamma / (self.gamma-1)
 
     def __repr__(self):
-        string = "Flow Element at location x={:.2f} \n".format(self.x)
+        # helper for printing results (can be adjusted to print total properties, etc.)
+
+        string = "Flow Element at location x={:.3f} \n".format(self.x)
         for attr in ['M', 'p', 'rho', 'T']:
             val = self.__getattribute__(attr)
             string += '{} : {:.2f} \n'.format(attr, val)
@@ -82,6 +99,15 @@ class FlowElement():
 
     
 def isentropic_propagate(fe : FlowElement, M1 = None, p1 = None, T1 = None, A1=None) -> FlowElement:
+    """
+    Propagate FlowElement fe along an isentrope
+    :param fe: a FlowElement instance
+    :param M1: resulting Mach number, used to compute properties of the new point
+    :param p1: resulting pressure (not implemented)
+    :param T1: resulting temperature (not implemented)
+    :param A1: resulting duct area, used to compute properties of the new point
+    :return: fe1 -  the resulting FlowElement instance
+    """
     if M1 is not None:
         p1 = isentropic_pressure_ratio(M1, fe.M, fe.gamma) * fe.p
         T1 = isentropic_temp_ratio(M1, fe.M, fe.gamma) * fe.T
@@ -106,6 +132,13 @@ def isentropic_propagate(fe : FlowElement, M1 = None, p1 = None, T1 = None, A1=N
 
 
 def Fanno_propagate(fe: FlowElement, friction, distance=None, M1=None) -> FlowElement:
+    """
+        Propagate FlowElement fe along a Fanno line
+        :param fe: a FlowElement instance
+        :param M1: resulting Mach number, used to compute properties of the new point
+        :param distance: length of the duct
+        :return: fe1 -  the resulting FlowElement instance
+        """
     if distance is not None:
 
         xfinal = distance + fe.x
@@ -131,7 +164,15 @@ def Fanno_propagate(fe: FlowElement, friction, distance=None, M1=None) -> FlowEl
         raise NotImplementedError('bad input')
 
 def normal_shock(fe: FlowElement) -> FlowElement:
+    """
+    Normal shock relation
+    :param fe: upstream FlowElement (should be supersonic)
+    :return: downstream FlowElement (always subsonic)
+    """
     M1 = fe.M
+    if M1 < 1.0:
+        return fe # no shock!
+
     p1 = fe.p
     T1 = fe.T
     gamma = fe.gamma
@@ -144,7 +185,38 @@ def normal_shock(fe: FlowElement) -> FlowElement:
     post_shock_element = FlowElement(M2, p2, T2, gamma, fe.R, fe.A, fe.x)
 
     return post_shock_element
-    
+
+def Rayleigh_heat_addition(fp:FlowElement, dq)->FlowElement:
+    """
+    propagate along a Rayleigh line due to heat addition dq
+    :param fp: initial FlowElement instance
+    :param dq: heat addition (positive-> heat added to the flow)
+    :return: final FlowElement instance
+    """
+
+    delta_Ttot = dq / fp.Cp
+    Ttot2 = fp.Ttot + delta_Ttot
+
+    M2 = Rayleigh_Mach_from_Ttot_ratio(Ttot2, fp.Ttot, fp.M, fp.gamma)
+    p2 = Rayleigh_p_ratio(M2, fp.M, fp.gamma) * fp.p
+    T2 = Rayleigh_T_ratio(M2, fp.M, fp.gamma) * fp.T
+
+    return FlowElement(M2, p2, T2, A = fp.A)
+
+def Rayleigh_propagate(fp, M2):
+    """
+        propagate along a Rayleigh line up to Mach number M2
+        :param fp: initial FlowElement instance
+        :param M2: final Mach number
+        :return: final FlowElement instance
+    """
+    p2 = Rayleigh_p_ratio(M2, fp.M, fp.gamma) * fp.p
+    T2 = Rayleigh_T_ratio(M2, fp.M, fp.gamma) * fp.T
+
+    return FlowElement(M2, p2, T2, A=fp.A)
+
+
+
 
 
 
